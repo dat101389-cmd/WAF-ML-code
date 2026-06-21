@@ -74,19 +74,43 @@ print("-> [ML-WAF Superior] Khởi tạo bộ não AI (Random Forest) thành cô
 print("-> Hệ thống đang gác cổng tại: http://127.0.0.1:5000")
 print_dashboard()
 
+
 def check_zero_day_anomaly(path, query_string, post_data):
-    """Rule-based giờ đây rút về làm hàng phòng ngự phụ (chỉ chặn các bất thường quá thô thiển)"""
+     
     q = str(query_string or "")
     p = str(post_data or "")
+    full_path = str(path or "")
     data_to_check = (q + " " + p).lower()
 
     if len(q) > 400 or len(p) > 800:
-        return True, "Hạn chế Payload: Độ dài vượt ngưỡng an toàn", "zeroday"
+        return True, "Zero-day: Payload length anomaly detected", "zeroday"
 
-    if any(pattern in data_to_check for pattern in ["cat /etc", "rm -rf", "wget ", "curl "]):
-        return True, "Hệ thống phát hiện dấu hiệu can thiệp OS", "zeroday"
+    path_traversal_regex = r"(\.\.\/|\.\.\\|%2e%2e%2f|%2e%2e%252f|%252e%252e%252f|etc\/passwd|boot\.ini|win\.ini|proc\/self)"
+    if re.search(path_traversal_regex, data_to_check) or re.search(path_traversal_regex, full_path.lower()):
+        return True, "Zero-day: Path Traversal / Arbitrary File Read attempt", "zeroday"
+
+    rce_patterns = [
+        "cat /etc", "rm -rf", "wget ", "curl ", "uname -a", "whoami", "id ", 
+        "powershell", "cmd.exe", "bin/sh", "bin/bash", "phpinfo()", "eval(", "system("
+    ]
+    if any(pattern in data_to_check for pattern in rce_patterns):
+        return True, "Zero-day: OS Command Injection / Remote Code Execution signature", "zeroday"
+
+    total_chars = len(data_to_check)
+    if total_chars > 30:
+        special_chars = len(re.findall(r"[^a-zA-Z0-9\s]", data_to_check))
+        # Nếu tỷ lệ ký tự đặc biệt (%, $, &, ;, <, >, \, ', ") vượt quá 45% tổng chuỗi -> Bất thường
+        if (special_chars / total_chars) > 0.45:
+            return True, "Zero-day: High density of special characters (Possible Obfuscation Bypass)", "zeroday"
+
+    if "<!entity" in data_to_check or "<!doctype" in data_to_check:
+        return True, "Zero-day: XML External Entity (XXE) attempt", "zeroday"
+
+    if any(x in data_to_check for x in ["expect://", "php://filter", "input://", "data://"]):
+        return True, "Zero-day: PHP Wrapper Stream Abuse", "zeroday"
 
     return False, "", ""
+
 
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE'])
 @app.route('/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
