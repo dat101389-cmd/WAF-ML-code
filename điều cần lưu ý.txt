@@ -3,4 +3,4 @@ link hướng dẫn cài python : https://www.youtube.com/watch?v=W99c8zVOkkg.
 lệnh cài đặt thư viện cần thiết ( viết trên cmd ) : pip install flask requests scikit-learn.
 Nhập mã code demo lên notepad rồi đặt tên bất kì nhưng phải có đuôi .py ở cuối . Đến lúc demo chỉ cần vào cmd nhập lệnh python + địa chỉ file code . Sau đó vào XAMPP control panel rồi start Apache và MySQL .
 Sau đó lên trình duyệt cốc cốc hoạc chrome rồi nhập http://127.0.0.1:5000/dvwa/login.php để  đăng nhập vào web DVWA (phần setup , username , password xem ở link hướng dẫn).
-Để cho thuật toán tốt hơn tôi sẽ thay Logistic Regression thành Random Forest.
+
