@@ -86,7 +86,6 @@ print("-> [4/4] ML-WAF đã sẵn sàng tại: http://127.0.0.1:5000")
 print_dashboard()
 
 def check_rule_anomaly(path, query_string, post_data):
-    """SỬA LỖI LỚN 4: Chuẩn hóa lại hàm check thành Luật phát hiện bất thường"""
     q = str(query_string or "")
     p = str(post_data or "")
     data_to_check = (q + " " + p).lower()
@@ -94,7 +93,6 @@ def check_rule_anomaly(path, query_string, post_data):
     if len(q) > 500 or len(p) > 1000:
         return True, "Vượt quá độ dài dữ liệu định mức an toàn", "anomaly"
 
-    # Signature-based kiểm tra hành vi duyệt file (Path Traversal / LFI)
     if any(pattern in data_to_check for pattern in ["../", "passwd", "etc/"]):
         return True, "Dấu hiệu truy cập tệp tin hệ thống trái phép (Path Traversal)", "anomaly"
 
@@ -121,7 +119,6 @@ def proxy(path):
         
         if probability >= 85.0:
             is_blocked = True
-            # SỬA LỖI LỚN 3: Sử dụng tập từ khóa đặc trưng để gán nhãn loại hình tấn công hậu AI
             if any(k in full_payload.lower() for k in ["script", "alert", "onerror", "svg", "javascript"]):
                 attack_type = "xss"
                 reason = "Mô hình ML phát hiện độc hại -> Tầng lọc gán nhãn: Tấn công XSS"
